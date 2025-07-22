@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>القرآن الكريم</title>
+  <style>
+    body {
+      font-family: 'Scheherazade', serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+    }
+    header {
+      background-color: #198754;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 2rem;
+    }
+    #controls {
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    select, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    .ayah {
+      background-color: white;
+      margin: 1rem auto;
+      padding: 1rem;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      transition: background-color 0.3s, border 0.3s;
+    }
+    .verse-number {
+      color: #0d6efd;
+      font-weight: bold;
+    }
+    .arabic {
+      font-size: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .urdu {
+      color: #495057;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .audio-player {
+      text-align: center;
+      margin: 1rem;
+    }
+    .playing {
+      background-color: #d1e7dd;
+      border: 2px solid #198754;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #dee2e6;
+    }
+  </style>
+</head>
+<body>
+  <header>القرآن الكريم</header>
+  <div id="controls">
+    <select id="surah-select"></select>
+    <button onclick="toggleTranslation()">📖 Urdu Translation</button>
+  </div>
+
+  <div id="audio-controls" class="audio-player">
+    <button onclick="playSurahAudio()">🔊 Play Surah Audio</button>
+    <button id="pauseResumeBtn" onclick="togglePause()" disabled>⏸ Pause Audio</button>
+    <div id="audio-status"></div>
+  </div>
+
+  <div id="verse-container"></div>
+  <footer>Developed with ❤️ for Quran readers</footer>
+
+  <script>
+    let showTranslation = false;
+    let quranData = [];
+    let quranUrData = [];
+    let currentSurahIndex = 0;
+    let reciterNo = 2;
+    let audio = new Audio();
+    let currentAyah = 1;
+    let isPaused = false;
+
+    async function loadQuran() {
+      const [arRes, urRes] = await Promise.all([
+        fetch("./quran.json"),
+        fetch("./quran_ur.json")
+      ]);
+      quranData = await arRes.json();
+      quranUrData = await urRes.json();
+      populateSurahList();
+    }
+
+    function populateSurahList() {
+      const select = document.getElementById("surah-select");
+      quranData.forEach((surah, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.textContent = `${surah.id}. ${surah.name} (${surah.transliteration})`;
+        select.appendChild(opt);
+      });
+      select.addEventListener("change", () => {
+        currentSurahIndex = parseInt(select.value);
+        showSurah(currentSurahIndex);
+      });
+      showSurah(0);
+    }
+
+    function showSurah(index) {
+      const container = document.getElementById("verse-container");
+      container.innerHTML = "";
+      currentSurahIndex = index;
+      const surah = quranData[index];
+      const surahUr = quranUrData[index];
+
+      surah.verses.forEach((verse, i) => {
+        const ayahDiv = document.createElement("div");
+        ayahDiv.className = "ayah";
+        ayahDiv.id = `ayah-${i + 1}`;
+
+        const number = document.createElement("div");
+        number.className = "verse-number";
+        number.textContent = `(${surah.id}:${i + 1})`;
+
+        const arabic = document.createElement("div");
+        arabic.className = "arabic";
+        arabic.textContent = verse.text;
+
+        const urdu = document.createElement("div");
+        urdu.className = "urdu";
+        urdu.textContent = surahUr.verses[i].translation;
+
+        ayahDiv.appendChild(number);
+        ayahDiv.appendChild(arabic);
+        ayahDiv.appendChild(urdu);
+        container.appendChild(ayahDiv);
+      });
+    }
+
+    function toggleTranslation() {
+      showTranslation = !showTranslation;
+      const urduElements = document.querySelectorAll(".urdu");
+      urduElements.forEach(el => el.style.display = showTranslation ? "block" : "none");
+    }
+
+    function playSurahAudio() {
+      const surah = quranData[currentSurahIndex];
+      const totalAyahs = surah.total_verses;
+      currentAyah = 1;
+      isPaused = false;
+
+      clearAllHighlights();
+      document.getElementById("pauseResumeBtn").disabled = false;
+      updatePauseButton();
+      playAyah(currentAyah, surah.id, totalAyahs);
+    }
+
+    function playAyah(ayahNo, surahNo, totalAyahs) {
+      const status = document.getElementById("audio-status");
+      const url = `https://the-quran-project.github.io/Quran-Audio/Data/${reciterNo}/${surahNo}_${ayahNo}.mp3`;
+
+      audio.src = url;
+      audio.play().then(() => {
+        status.textContent = `🔊 (${surahNo}:${ayahNo}) آیت چل رہی ہے`;
+        highlightAyah(ayahNo);
+      }).catch(() => {
+        status.textContent = `⚠️ Problem loading audio (Please Check Internet Connection) (${surahNo}:${ayahNo})`;
+      });
+
+      audio.onended = () => {
+        unhighlightAyah(ayahNo);
+        if (!isPaused && ayahNo < totalAyahs) {
+          currentAyah++;
+          playAyah(currentAyah, surahNo, totalAyahs);
+        } else if (ayahNo === totalAyahs) {
+          status.textContent = `✅ Surah Complete  (${surahNo})`;
+          document.getElementById("pauseResumeBtn").disabled = true;
+        }
+      };
+    }
+
+    function togglePause() {
+      if (audio.paused) {
+        audio.play();
+        isPaused = false;
+      } else {
+        audio.pause();
+        isPaused = true;
+      }
+      updatePauseButton();
+    }
+
+    function updatePauseButton() {
+      const btn = document.getElementById("pauseResumeBtn");
+      btn.textContent = audio.paused ? "⏸ Resume" : "▶️ Pause";
+    }
+
+    function highlightAyah(ayahNo) {
+      clearAllHighlights();
+      const el = document.getElementById(`ayah-${ayahNo}`);
+      if (el) {
+        el.classList.add("playing");
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function unhighlightAyah(ayahNo) {
+      const el = document.getElementById(`ayah-${ayahNo}`);
+      if (el) {
+        el.classList.remove("playing");
+      }
+    }
+
+    function clearAllHighlights() {
+      document.querySelectorAll(".ayah.playing").forEach(el => {
+        el.classList.remove("playing");
+      });
+    }
+
+    loadQuran();
+  </script>
+</body>
+</html>
+
