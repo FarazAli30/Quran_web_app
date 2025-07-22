@@ -178,7 +178,7 @@
         status.textContent = `🔊 (${surahNo}:${ayahNo}) آیت چل رہی ہے`;
         highlightAyah(ayahNo);
       }).catch(() => {
-        status.textContent = `⚠️ Problem loading audio (Please Check Internet Connection) (${surahNo}:${ayahNo})`;
+        status.textContent = `Problem loading audio (Please Check Internet Connection) (${surahNo}:${ayahNo})`;
       });
 
       audio.onended = () => {
