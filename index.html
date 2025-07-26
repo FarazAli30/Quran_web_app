@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>القرآن الكريم</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
   <style>
+    :root {
+      --arabic-font-size: 1.5rem;
+    }
+
     body {
       font-family: 'Scheherazade', serif;
       background-color: #f8f9fa;
@@ -12,24 +17,90 @@
       padding: 0;
       direction: rtl;
     }
+
+    .sticky-container {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
     header {
       background-color: #198754;
       color: white;
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       text-align: center;
       font-size: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    #controls {
+
+    header > span {
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .header-icon {
+      color: white;
+      text-decoration: none;
+      line-height: 0;
+    }
+
+    .header-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: currentColor;
+    }
+
+    #controls-wrapper {
+      background-color: #ffffff;
+      padding: 0.3rem 0.5rem;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    #controls,
+    #audio-controls {
       display: flex;
       justify-content: center;
-      padding: 1rem;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
     }
-    select, button {
-      padding: 0.5rem;
-      font-size: 1rem;
+
+    select,
+    button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      max-width: 100%;
     }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.9rem;
+    }
+
+    #zoom-slider {
+      width: 100px;
+      height: 4px;
+      cursor: pointer;
+    }
+
+    #audio-status {
+      background-color: #e9ecef;
+      text-align: center;
+      padding: 0.25rem;
+      font-size: 0.9rem;
+      color: #495057;
+      min-height: 1.5em;
+    }
+
     .ayah {
       background-color: white;
       margin: 1rem auto;
@@ -38,54 +109,155 @@
       max-width: 800px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       border-radius: 8px;
-      transition: background-color 0.3s, border 0.3s;
+      transition: background-color 0.3s, border-color 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
     }
+
     .verse-number {
       color: #0d6efd;
       font-weight: bold;
     }
+
     .arabic {
-      font-size: 1.5rem;
+      font-size: var(--arabic-font-size);
       margin-top: 0.5rem;
     }
+
     .urdu {
       color: #495057;
       font-size: 1rem;
       margin-top: 0.5rem;
       display: none;
     }
-    .audio-player {
-      text-align: center;
-      margin: 1rem;
+
+    .ayah.selected {
+      border-color: #0d6efd;
+      background-color: #e2eafc;
     }
+
     .playing {
       background-color: #d1e7dd;
-      border: 2px solid #198754;
+      border-color: #198754;
     }
+
+    .ayah pre {
+      direction: ltr;
+      text-align: left;
+      border-radius: 6px;
+    }
+
     footer {
       text-align: center;
-      padding: 1rem;
+      padding: 2rem 1rem;
       background-color: #dee2e6;
+      color: #343a40;
+    }
+
+    .footer-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .dev-info {
+      margin-top: 1rem;
+      border-top: 1px solid #adb5bd;
+      padding-top: 1rem;
+    }
+
+    .social-links {
+      margin-top: 0.5rem;
+    }
+
+    .social-links a {
+      margin: 0 10px;
+      color: #212529;
+      display: inline-block;
+    }
+
+    .social-links svg {
+      width: 28px;
+      height: 28px;
+      fill: currentColor;
+      transition: transform 0.2s;
+    }
+
+    .social-links a:hover svg {
+      transform: scale(1.2);
+    }
+
+    @media (max-width: 480px) {
+      select,
+      button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+
+      #zoom-slider {
+        width: 80px;
+      }
+
+      .zoom-controls {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
 <body>
-  <header>القرآن الكريم</header>
-  <div id="controls">
-    <select id="surah-select"></select>
-    <button onclick="toggleTranslation()">📖 Urdu Translation</button>
-  </div>
 
-  <div id="audio-controls" class="audio-player">
-    <button onclick="playSurahAudio()">🔊 Play Surah Audio</button>
-    <button id="pauseResumeBtn" onclick="togglePause()" disabled>⏸ Pause Audio</button>
+
+  <div class="sticky-container">
+    <header>
+      <a href="https://github.com/FarazAli30/Quran_web_app" target="_blank" class="header-icon" title="View Source Code on GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+      </a>
+      <span>القرآن الكريم</span>
+    </header>
+    <div id="controls-wrapper">
+      <div id="controls">
+        <select id="surah-select"></select>
+        <div class="zoom-controls">
+          <span>🔎</span>
+          <input type="range" id="zoom-slider" min="1.0" max="3.0" step="0.1" value="1.5" title="Adjust Font Size">
+          <span></span>
+        </div>
+        <button onclick="toggleTranslation()">📖 Urdu Translation</button>
+      </div>
+      <div id="audio-controls" class="audio-player">
+        <button onclick="playSurahAudio()">🔊 Play Surah Audio</button>
+        <button id="pauseResumeBtn" onclick="togglePause()" disabled>⏸️ Pause Audio</button>
+      </div>
+    </div>
     <div id="audio-status"></div>
   </div>
 
   <div id="verse-container"></div>
-  <footer>Developed with ❤️ for Quran readers</footer>
+
+  <footer>
+    <div class="footer-content">
+      <p>Developed with ❤️ for Quran readers</p>
+      <div class="dev-info">
+        <p><strong>About the Developer</strong></p>
+        <div class="social-links">
+          <a href="https://github.com/FarazAli30" target="_blank" title="GitHub Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+          </a>
+          <a href="https://www.linkedin.com/in/farazalikhushk?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" title="LinkedIn Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+          <a href="#" target="_blank" title="Personal Website">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3.39 16.953c-.336.396-1.011.442-1.404.093-.4-.35-.441-1.023-.093-1.404l4.288-4.64-4.288-4.64c-.347-.381-.304-1.054.093-1.404s1.066-.304 1.404.093l5.059 5.5c.343.376.343.984 0 1.36l-5.059 5.5z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
   <script>
+    // Global variables
     let showTranslation = false;
     let quranData = [];
     let quranUrData = [];
@@ -94,19 +266,80 @@
     let audio = new Audio();
     let currentAyah = 1;
     let isPaused = false;
+    let selectedAyah = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // NEW: Configure marked.js to use highlight.js for code blocks
+      marked.setOptions({
+        highlight: function(code, lang) {
+          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+          return hljs.highlight(code, { language }).value;
+        }
+      });
+      
+      loadQuran();
+      setupZoomSlider();
+    });
+
+    function setupZoomSlider() {
+      const zoomSlider = document.getElementById('zoom-slider');
+      document.documentElement.style.setProperty('--arabic-font-size', `${zoomSlider.value}rem`);
+      zoomSlider.addEventListener('input', function() {
+        document.documentElement.style.setProperty('--arabic-font-size', `${this.value}rem`);
+      });
+    }
 
     async function loadQuran() {
       const [arRes, urRes] = await Promise.all([
-        fetch("./quran.json"),
-        fetch("./quran_ur.json")
+        fetch("./data/quran.json"),
+        fetch("./data/quran_ur.json")
       ]);
       quranData = await arRes.json();
       quranUrData = await urRes.json();
       populateSurahList();
+      showDeveloperInfo();
     }
+
+    // REMOVED: The old parseSimpleMarkdown function is no longer needed.
+
+    async function showDeveloperInfo() {
+        const container = document.getElementById("verse-container");
+        document.getElementById('audio-controls').style.display = 'none';
+        document.getElementById('audio-status').style.display = 'none';
+
+        try {
+            const response = await fetch('./info/info.md');
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const markdownText = await response.text();
+            
+            // NEW: Use the marked.js library to parse the markdown
+            const contentHtml = marked.parse(markdownText);
+
+            container.innerHTML = `
+                <div class="ayah" style="text-align: left; direction: ltr; cursor: default;">
+                    ${contentHtml}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Failed to load or parse info.md:', error);
+            container.innerHTML = `
+                <div class="ayah" style="text-align: center; color: red;">
+                    <p>Error: Could not load developer information.</p>
+                </div>`;
+        }
+    }
+
 
     function populateSurahList() {
       const select = document.getElementById("surah-select");
+      
+      const placeholderOpt = document.createElement("option");
+      placeholderOpt.value = "";
+      placeholderOpt.textContent = "Select a Surah...";
+      placeholderOpt.disabled = true;
+      placeholderOpt.selected = true;
+      select.appendChild(placeholderOpt);
+
       quranData.forEach((surah, index) => {
         const opt = document.createElement("option");
         opt.value = index;
@@ -114,27 +347,50 @@
         select.appendChild(opt);
       });
       select.addEventListener("change", () => {
-        currentSurahIndex = parseInt(select.value);
-        showSurah(currentSurahIndex);
+        if (select.value) {
+            currentSurahIndex = parseInt(select.value);
+            showSurah(currentSurahIndex);
+        }
       });
-      showSurah(0);
     }
 
     function showSurah(index) {
+      audio.pause();
+      audio.src = '';
+      isPaused = false;
+      const pauseBtn = document.getElementById("pauseResumeBtn");
+      pauseBtn.disabled = true;
+      pauseBtn.textContent = "⏸️ Pause Audio";
+      document.getElementById("audio-status").textContent = "";
+
+      document.getElementById('audio-controls').style.display = 'flex';
+      document.getElementById('audio-status').style.display = 'block';
+
       const container = document.getElementById("verse-container");
       container.innerHTML = "";
       currentSurahIndex = index;
+      selectedAyah = null;
       const surah = quranData[index];
       const surahUr = quranUrData[index];
 
-      surah.verses.forEach((verse, i) => {
+      surah.verses.forEach((verse,i) => {
+        const ayahNumber = i + 1;
         const ayahDiv = document.createElement("div");
         ayahDiv.className = "ayah";
-        ayahDiv.id = `ayah-${i + 1}`;
+        ayahDiv.id = `ayah-${ayahNumber}`;
+        
+        ayahDiv.addEventListener('click', () => {
+            const currentlySelected = document.querySelector('.ayah.selected');
+            if (currentlySelected) {
+                currentlySelected.classList.remove('selected');
+            }
+            ayahDiv.classList.add('selected');
+            selectedAyah = ayahNumber;
+        });
 
         const number = document.createElement("div");
         number.className = "verse-number";
-        number.textContent = `(${surah.id}:${i + 1})`;
+        number.textContent = `(${surah.id}:${ayahNumber})`;
 
         const arabic = document.createElement("div");
         arabic.className = "arabic";
@@ -149,6 +405,10 @@
         ayahDiv.appendChild(urdu);
         container.appendChild(ayahDiv);
       });
+      
+      if (showTranslation) {
+        document.querySelectorAll(".urdu").forEach(el => el.style.display = "block");
+      }
     }
 
     function toggleTranslation() {
@@ -160,7 +420,7 @@
     function playSurahAudio() {
       const surah = quranData[currentSurahIndex];
       const totalAyahs = surah.total_verses;
-      currentAyah = 1;
+      currentAyah = selectedAyah || 1;
       isPaused = false;
 
       clearAllHighlights();
@@ -175,10 +435,10 @@
 
       audio.src = url;
       audio.play().then(() => {
-        status.textContent = `🔊 (${surahNo}:${ayahNo}) آیت چل رہی ہے`;
+        status.textContent = `🔊 (${surahNo}:${ayahNo}) Playing Ayah`;
         highlightAyah(ayahNo);
       }).catch(() => {
-        status.textContent = `Problem loading audio (Please Check Internet Connection) (${surahNo}:${ayahNo})`;
+        status.textContent = `⚠️ Problem loading audio (Please Check Internet Connection) (${surahNo}:${ayahNo})`;
       });
 
       audio.onended = () => {
@@ -187,26 +447,27 @@
           currentAyah++;
           playAyah(currentAyah, surahNo, totalAyahs);
         } else if (ayahNo === totalAyahs) {
-          status.textContent = `✅ Surah Complete  (${surahNo})`;
+          status.textContent = `✅ Surah Complete (${surahNo})`;
           document.getElementById("pauseResumeBtn").disabled = true;
         }
       };
     }
 
     function togglePause() {
-      if (audio.paused) {
-        audio.play();
-        isPaused = false;
-      } else {
-        audio.pause();
-        isPaused = true;
-      }
-      updatePauseButton();
+        if (!audio.src) return;
+        if (audio.paused) {
+            audio.play();
+            isPaused = false;
+        } else {
+            audio.pause();
+            isPaused = true;
+        }
+        updatePauseButton();
     }
 
     function updatePauseButton() {
-      const btn = document.getElementById("pauseResumeBtn");
-      btn.textContent = audio.paused ? "⏸ Resume" : "▶️ Pause";
+        const btn = document.getElementById("pauseResumeBtn");
+        btn.textContent = audio.paused ? "▶️ Resume Audio" : "⏸️ Pause Audio";
     }
 
     function highlightAyah(ayahNo) {
@@ -230,9 +491,6 @@
         el.classList.remove("playing");
       });
     }
-
-    loadQuran();
   </script>
 </body>
 </html>
-
